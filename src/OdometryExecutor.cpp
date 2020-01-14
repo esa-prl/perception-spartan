@@ -5,7 +5,7 @@ using namespace std;
 using namespace Eigen;
 using namespace cv;
 
-OdometryExecutor::OdometryExecutor(const OdometryConfig& conf, CalibInfo ci, Affine3d cam2body_tf)
+OdometryExecutor::OdometryExecutor(const OdometryConfig& conf, CalibInfo ci, Eigen::Affine3d cam2body_tf)
 {
     mConfig = conf;
     int ret;
@@ -49,28 +49,28 @@ OdometryExecutor::OdometryExecutor(const OdometryConfig& conf, CalibInfo ci, Aff
 
     // ------ for the PTU  the body2cam transform is given by: body->mast, mast->ptu, ptu->cam
     // base_tf (body->cam) = ptu2cam_tf*mast2ptu_tf*boby2mast_tf
-    Affine3d body2mast_tf;
-    body2mast_tf = Affine3d::Identity();
+    Eigen::Affine3d body2mast_tf;
+    body2mast_tf = Eigen::Affine3d::Identity();
     Vector3d body2mast_t(0.078, 0.0, 0.633);
     Eigen::Quaternion<double> body2mast_q(1.0, 0.0, 0.0, 0.0);
     body2mast_tf.translate(body2mast_t);
     body2mast_tf.rotate(body2mast_q);
 
-    Affine3d mast2ptu_tf;
-    mast2ptu_tf = Affine3d::Identity();
+    Eigen::Affine3d mast2ptu_tf;
+    mast2ptu_tf = Eigen::Affine3d::Identity();
     Vector3d mast2ptu_t(0.0, 0.0, 0.03425);
     Eigen::Quaternion<double> mast2ptu_q(0.965926, 0.0, 0.258817, 0.0);
     mast2ptu_tf.rotate(mast2ptu_q);
     mast2ptu_tf.translate(mast2ptu_t);
 
-    Affine3d ptu2cam_tf;
-    ptu2cam_tf = Affine3d::Identity();
+    Eigen::Affine3d ptu2cam_tf;
+    ptu2cam_tf = Eigen::Affine3d::Identity();
     Vector3d ptu2cam_t(-0.02, 0.06, 0.094);
     Eigen::Quaternion<double> ptu2cam_q(0.5, 0.5, -0.5, -0.5);
     ptu2cam_tf.translate(ptu2cam_t);
     ptu2cam_tf.rotate(ptu2cam_q);
 
-    base_tf = Affine3d::Identity();
+    base_tf = Eigen::Affine3d::Identity();
     base_tf = ptu2cam_tf*mast2ptu_tf*body2mast_tf;
     // ------
 
@@ -80,7 +80,7 @@ OdometryExecutor::OdometryExecutor(const OdometryConfig& conf, CalibInfo ci, Aff
          -1.0,  0.0,        0.0,        0.06,
          0.0,   -0.85896,    -0.512043,  0.6530,
          0.0,   0.0,        0.0,        1.0;
-    base_tf = Affine3d::Identity();
+    base_tf = Eigen::Affine3d::Identity();
     base_tf.matrix() = M;
     // ------
 
@@ -416,7 +416,7 @@ void OdometryExecutor::nextPose(base::samples::frame::FramePair stereo_pair, vec
     double tt_raw[3] = {qrt[4], qrt[5], qrt[6]};
     Map<Quaternion<double> > qq(qq_raw);
     Map<Matrix<double, 1,3,RowMajor> > tt(tt_raw);
-    Affine3d camera_cumulative_tf(Affine3d::Identity());
+    Eigen::Affine3d camera_cumulative_tf(Eigen::Affine3d::Identity());
     camera_cumulative_tf.translate(tt.transpose());
     camera_cumulative_tf.rotate(qq);
 
@@ -454,7 +454,7 @@ void OdometryExecutor::nextPose(base::samples::frame::FramePair stereo_pair, vec
     // it to a body-to-body transform using the above relation,
     // since A is given (calculated at the constructor, values
     // come from the geometry of the rover and the camera mount).
-    Affine3d tf(base_tf);
+    Eigen::Affine3d tf(base_tf);
     //tf.translate(tt.transpose());   // First translate, then rotate
     //tf.rotate(qq);
     tf = tf * camera_cumulative_tf;
